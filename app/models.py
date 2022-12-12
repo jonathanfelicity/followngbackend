@@ -13,6 +13,7 @@ class User(db.Model):
 
     wallet = db.relationship("Wallet", backref="user", uselist=False)
 
+
     def __repr__(self):
         return f"User('{self.username}', '{self.created_At}'"
 

@@ -4,11 +4,11 @@ from .models import User, Wallet
 from flask import jsonify, request as req
 
 BASE_URL = '/api/v1/'
+APP_NAME = 'FOLLOWNG'
 
-
-@api.route(f'{BASE_URL}')
+@api.route('/', methods=['POST'])
 def index():
-    return {'msg': 'Welcome to FollowNG api'}
+    return {"followng": f"Welcome to {APP_NAME}"}
 
 
 
@@ -21,5 +21,13 @@ def users():
         db.session.add(user)
         db.session.commit()
         return jsonify(username)
-    return f"{User.query.all()}"
+    return f'{User.query.all()}'
 
+
+
+from flask import render_template
+
+@api.errorhandler(404)
+def page_not_found(e): # e must be in there
+    # note that we set the 404 status, this is what it catches
+    return {"Resour"}, 404
