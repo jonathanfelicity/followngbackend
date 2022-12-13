@@ -1,7 +1,10 @@
-from app import api, db
+from app import api
+
+
+
 
 
 
 if __name__ == '__main__':
-    db.create_all()
+   
     api.run(debug=True)

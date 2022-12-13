@@ -1,8 +1,10 @@
 
 from . import api, db
-from models import User, Wallet
+from .models import User, Wallet
 from flask import jsonify, request as req
-from .schema import single_user
+from .schema import single_user, all_users
+
+import sys
 
 
 BASE_URL = '/api/v1/'
@@ -20,7 +22,7 @@ def users():
             return single_user.jsonify(user)
         except:
             return jsonify({'error': 'an error occured while trying login'})
-    return f'{User.query.all()}'
+    return all_users.jsonify(User.query.all())
 
 
 

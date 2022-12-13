@@ -1,4 +1,4 @@
-from models import User
+from .models import User
 from . import ma
 
 
@@ -8,5 +8,5 @@ class UserSchema(ma.Schema):
         fields = ('id', 'username', 'created_At','is_Banned', 'wallet')
 
 
-single_user = UserSchema(strict=True)
-all_users = UserSchema(many=True, strict=True)
+single_user = UserSchema()
+all_users = UserSchema(many=True)
