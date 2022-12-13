@@ -1,3 +1,5 @@
 venv
 factory
 __pycache__
+.env
+run.py
