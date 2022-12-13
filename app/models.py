@@ -9,13 +9,16 @@ class User(db.Model):
     username = db.Column(db.String(255), nullable=False, unique=True)
     created_At = db.Column(db.DateTime, server_default=db.func.now())
     is_Banned = db.Column(db.Boolean, default=False, nullable=False)
-
-
     wallet = db.relationship("Wallet", backref="user", uselist=False)
+
+
+    def __init__(self, username) -> None:
+        self.username = username
 
 
     def __repr__(self):
         return f"User('{self.username}', '{self.created_At}'"
+
 
 
 
@@ -29,3 +32,10 @@ class Wallet(db.Model):
 
     def __repr__(self):
         return f"User('{self.owner}', '{self.balance}', '{self.balance}'"
+
+
+
+# class Campaign(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     is_Complete = db.Column(db.Boolean, default=False, nullable=False)
+    

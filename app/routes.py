@@ -1,33 +1,30 @@
 
 from . import api, db
-from .models import User, Wallet
+from models import User, Wallet
 from flask import jsonify, request as req
+from .schema import single_user
+
 
 BASE_URL = '/api/v1/'
-APP_NAME = 'FOLLOWNG'
-
-@api.route('/', methods=['POST'])
-def index():
-    return {"followng": f"Welcome to {APP_NAME}"}
-
-
-
 
 @api.route(f'{BASE_URL}/users', methods=['GET', 'POST'])
 def users():
     if req.method == 'POST':
-        username, *_ = req.get_json()
-        user = User(username='jfmurum')
-        db.session.add(user)
-        db.session.commit()
-        return jsonify(username)
+        username = req.json['username']
+        if User.query.filter_by(username=username).first():
+            return jsonify({'username': username})
+        try:
+            user = User(username)
+            db.session.add(user)
+            db.session.commit()
+            return single_user.jsonify(user)
+        except:
+            return jsonify({'error': 'an error occured while trying login'})
     return f'{User.query.all()}'
 
 
 
-from flask import render_template
 
 @api.errorhandler(404)
-def page_not_found(e): # e must be in there
-    # note that we set the 404 status, this is what it catches
-    return {"Resour"}, 404
+def resource_not_found(e):
+    return jsonify(error=str(e)), 404
