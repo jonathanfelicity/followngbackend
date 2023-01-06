@@ -1,18 +1,20 @@
 from .models import User, Campaign, Wallet
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+
 from . import ma
 
 # Define the User schema
-class UserSchema(ma.ModelSchema):
+class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = User
 
 # Define the Wallet schema
-class WalletSchema(ma.ModelSchema):
+class WalletSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Wallet
 
 # Define the Campaign schema
-class CampaignSchema(ma.ModelSchema):
+class CampaignSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Campaign
 

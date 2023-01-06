@@ -4,6 +4,16 @@ from .contants import BASE_URL
 from .models import User, Wallet, Campaign
 
 
+
+from .schema import (
+    wallet_schema, 
+    wallets_schema,  
+    user_schema, 
+    users_schema, 
+    campaign_schema, 
+    campaigns_schema
+)
+
 # INDEX ENDPOINT
 @api.route(f'{BASE_URL}', methods=['GET', 'POST'])
 def index():
@@ -19,7 +29,7 @@ def index():
 
 
 # CREATE NEW USER
-@api.route(f'{BASE_URL}/users', methods=['POST'])
+@api.route(f'{BASE_URL}/user/create', methods=['POST'])
 def create_user():
  # Get the request data as a json object
     data = request.get_json()
@@ -33,6 +43,41 @@ def create_user():
     db.session.commit()
     # Serialize the user and return a response
     return jsonify({'user': user.username}), 201
+
+# GET ALL USERS
+@api.route(f'{BASE_URL}/users')
+def get_users():
+    # Get all users from the database
+    users = User.query.all()
+    # Serialize the users and return a response
+    return users_schema.jsonify(users)
+
+
+# GET USER BY ID
+@api.route(f'{BASE_URL}/users/<int:user_id>')
+def get_user(user_id):
+    # Get the user with the given ID
+    user = User.query.get(user_id)
+    if user is None:
+        # Return a 404 error if the user does not exist
+        return jsonify({'error': 'User not found'}), 404
+    # Serialize the user and return a response
+    return user_schema.jsonify(user)
+
+
+
+
+
+# GET USER WALLET
+@api.route(f'{BASE_URL}/users/<int:user_id>/wallet')
+def get_user_wallet(user_id):
+    # Get the user's wallet
+    wallet = Wallet.query.filter_by(user_id=user_id).first()
+    if wallet is None:
+        # Return a 404 error if the wallet does not exist
+        return jsonify({'error': 'Wallet not found'}), 404
+    # Serialize the wallet and return a response
+    return wallet_schema.jsonify(wallet)
 
 
 # FUND WALLET
@@ -50,6 +95,25 @@ def create_wallet():
     db.session.commit()
     # Serialize the wallet and return a response
     return jsonify({'wallet': wallet.id}), 201
+
+
+# FUND WALLET
+@api.route('/wallets/<int:wallet_id>', methods=['PUT'])
+def update_wallet(wallet_id):
+    # Get the wallet to update
+    wallet = Wallet.query.get(wallet_id)
+    if wallet is None:
+        # Return a 404 error if the wallet does not exist
+        return jsonify({'error': 'Wallet not found'}), 404
+    # Get the request data as a json object
+    data = request.get_json()
+    # Update the wallet with the request data
+    wallet.balance = data['balance']
+    # Save the changes to the database
+    db.session.commit()
+    # Serialize the wallet and return a response
+    return jsonify(wallet)
+
 
 # CREATE CAMPAIGN
 @api.route(f'{BASE_URL}/campaigns', methods=['POST', 'GET'])

@@ -9,7 +9,7 @@ from sqlalchemy.sql import func
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(255), nullable=False, unique=True)
-    is_Banned = db.Column(db.Boolean, default=False, nullable=False)
+    is_banned = db.Column(db.Boolean, default=False, nullable=False)
     insta_id = db.Column(db.String(255), nullable=False, unique=True)
     created_At = db.Column(db.DateTime, server_default=db.func.now())
 
