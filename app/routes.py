@@ -109,7 +109,7 @@ def fund_wallet(username):
 
 
 
-
+# SPEND FROM WALLET
 @api.route(f'{BASE_URL}/wallet/<username>/expend', methods=['POST'])
 def expend_funds(username):
     # Get the user by username
@@ -170,20 +170,21 @@ def create_campaign():
 def page_not_found(e):
     return jsonify({
         "status": "404 NOT FOUND",
-        "message": "The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again."
+        "message": "The requested resource was not found on the server. Please check the URL and try again."
     }), 404
+    
 # ERROR PAGE 500
 @api.errorhandler(500)
 def internal_server_error(e):
     return jsonify({
-        "status": "500 SERVER SIDE ERROR",
-        "message": "The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again."
+        "status": "500 SERVER ERROR",
+        "message": "An internal server error occurred. Please try again later."
     }), 500
 
 # ERROR PAGE 403
 @api.errorhandler(403)
 def page_forbidden(e):
     return jsonify({
-        "status": "403 CLIENT SIDE ERROR",
-        "message": "The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again."
+        "status": "403 FORBIDDEN",
+        "message": "You do not have permission to access the requested resource. Please check your credentials and try again."
     }), 403
