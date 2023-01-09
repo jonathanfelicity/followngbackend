@@ -5,8 +5,7 @@ import os
 
 BASE_URL = '/api/v1'
 
-
-
+DBURI ='postgresql://username:password@hostname/database_name'
 os.getenv("ACCESS_KEY")
 
 
