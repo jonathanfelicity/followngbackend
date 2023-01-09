@@ -1,5 +1,5 @@
 from . import api, db
-from flask import jsonify, request
+from flask import jsonify, request, Response
 from .contants import BASE_URL
 from .models import User, Wallet, Campaign
 
@@ -29,20 +29,24 @@ def index():
 
 
 # CREATE NEW USER
-@api.route(f'{BASE_URL}/user/create', methods=['POST'])
+@api.route(f'{BASE_URL}/users/create', methods=['POST'])
 def create_user():
- # Get the request data as a json object
+    # Get the user data from the request
     data = request.get_json()
-    # Create a new User object with the request data
-    user = User(
-        username=data['username'],
-        insta_id=data['insta_id']
-    )
+    # Check if the username or instagram ID already exists
+    existing_user = User.query.filter((User.username == data['username']) | (User.insta_id == data['insta_id'])).first()
+    if existing_user is not None:
+        # Return an error if the username or instagram ID already exists
+        return jsonify({'error': 'Username or Instagram ID already exists'}), 400
+    # Create a new user object
+    new_user = User(**data)
     # Add the user to the database
-    db.session.add(user)
+    db.session.add(new_user)
     db.session.commit()
     # Serialize the user and return a response
-    return jsonify({'user': user.username}), 201
+    data = user_schema.dumps(new_user)
+    response = Response(data, status=201, mimetype='application/json')
+    return response
 
 # GET ALL USERS
 @api.route(f'{BASE_URL}/users')
@@ -50,90 +54,115 @@ def get_users():
     # Get all users from the database
     users = User.query.all()
     # Serialize the users and return a response
-    return users_schema.jsonify(users)
+    data = user_schema.dump(users, many=True)
+    response = jsonify({'items': data})
+    return response
 
 
-# GET USER BY ID
-@api.route(f'{BASE_URL}/users/<int:user_id>')
-def get_user(user_id):
-    # Get the user with the given ID
-    user = User.query.get(user_id)
+# GET USER BALLANCE
+@api.route(f'{BASE_URL}/users/<username>/balance')
+def get_user_balance(username):
+    # Get the user by username
+    user = User.query.filter_by(username=username).first()
+    # Return a 404 error if the user does not exist
     if user is None:
-        # Return a 404 error if the user does not exist
         return jsonify({'error': 'User not found'}), 404
-    # Serialize the user and return a response
-    return user_schema.jsonify(user)
-
-
-
-
-
-# GET USER WALLET
-@api.route(f'{BASE_URL}/users/<int:user_id>/wallet')
-def get_user_wallet(user_id):
     # Get the user's wallet
-    wallet = Wallet.query.filter_by(user_id=user_id).first()
+    wallet = user.wallet
+    # Create a wallet for the user if one does not exist
     if wallet is None:
-        # Return a 404 error if the wallet does not exist
-        return jsonify({'error': 'Wallet not found'}), 404
-    # Serialize the wallet and return a response
-    return wallet_schema.jsonify(wallet)
+        wallet = Wallet(user_id=user.id)
+        db.session.add(wallet)
+        db.session.commit()
+    # Get the user's balance and the date the wallet was last updated
+    balance = wallet.balance
+    updated_at = wallet.updated_at
+    # Return the balance and the date the wallet was last updated as a response
+    return jsonify({'balance': balance, 'updated_at': updated_at})
 
 
 # FUND WALLET
-@api.route(f'{BASE_URL}/wallet/fund', methods=['POST', 'GET'])
-def create_wallet():
-    # Get the request data as a json object
-    data = request.get_json()
-    # Create a new Wallet object with the request data
-    wallet = Wallet(
-        balance=data['balance'],
-        user_id=data['user_id']
-    )
-    # Add the wallet to the database
-    db.session.add(wallet)
-    db.session.commit()
-    # Serialize the wallet and return a response
-    return jsonify({'wallet': wallet.id}), 201
-
-
-# FUND WALLET
-@api.route('/wallets/<int:wallet_id>', methods=['PUT'])
-def update_wallet(wallet_id):
-    # Get the wallet to update
-    wallet = Wallet.query.get(wallet_id)
+@api.route(f'{BASE_URL}/wallet/<username>/fund', methods=['POST'])
+def fund_wallet(username):
+    # Get the user by username
+    user = User.query.filter_by(username=username).first()
+    # Return a 404 error if the user does not exist
+    if user is None:
+        return jsonify({'error': 'User not found'}), 404
+    # Get the user's wallet
+    wallet = user.wallet
+    # Create a wallet for the user if one does not exist
     if wallet is None:
-        # Return a 404 error if the wallet does not exist
-        return jsonify({'error': 'Wallet not found'}), 404
-    # Get the request data as a json object
+        wallet = Wallet(user_id=user.id)
+        db.session.add(wallet)
+    # Get the amount to fund from the request data
     data = request.get_json()
-    # Update the wallet with the request data
-    wallet.balance = data['balance']
-    # Save the changes to the database
+    amount = data['amount']
+    # Add the amount to the wallet balance
+    wallet.balance += amount
+    # Commit the changes to the database
     db.session.commit()
     # Serialize the wallet and return a response
-    return jsonify(wallet)
+    data = wallet_schema.dump(wallet)
+    response = jsonify({'items': data})
+    return response
 
 
-# CREATE CAMPAIGN
-@api.route(f'{BASE_URL}/campaigns', methods=['POST', 'GET'])
+
+
+@api.route(f'{BASE_URL}/wallet/<username>/expend', methods=['POST'])
+def expend_funds(username):
+    # Get the user by username
+    user = User.query.filter_by(username=username).first()
+    # Return a 404 error if the user does not exist
+    if user is None:
+        return jsonify({'error': 'User not found'}), 404
+    # Get the user's wallet
+    wallet = user.wallet
+    # Return an error if the wallet does not exist
+    if wallet is None:
+        return jsonify({'error': 'Wallet not found'}), 404
+    # Get the expenditure from the request data
+    data = request.get_json()
+    expenditure = data['expenditure']
+    # Check if the expenditure is greater than the balance
+    if expenditure > wallet.balance:
+        return jsonify({'error': 'Insufficient balance'}), 400
+    # Subtract the expenditure from the balance
+    wallet.balance -= expenditure
+    # Check if the balance has reached 0
+    # if wallet.balance == 0:
+    #     return jsonify({'message': 'Low balance'}), 200
+    # Commit the changes to the database
+    db.session.commit()
+    # Serialize the wallet and return a response
+    data = wallet_schema.dump(wallet)
+    response = jsonify({'items': data})
+    return response
+
+
+# CREATING CAMPAIGN
+@api.route('/campaigns/create', methods=['POST'])
 def create_campaign():
-    # Get the request data as a json object
+    # Get the user by username from the request data
     data = request.get_json()
-    # Create a new Campaign object with the request data
-    campaign = Campaign(
-        type=data['type'],
-        goal=data['goal'],
-        user_id=data['user_id']
-    )
+    username = data['username']
+    user = User.query.filter_by(username=username).first()
+    # Return a 404 error if the user does not exist
+    if user is None:
+        return jsonify({'error': 'User not found'}), 404
+    # Create a new campaign using the request data
+    campaign = Campaign(**data)
+    # Set the user_id of the campaign to the id of the user
+    campaign.user_id = user.id
     # Add the campaign to the database
     db.session.add(campaign)
+    # Commit the changes to the database
     db.session.commit()
     # Serialize the campaign and return a response
-    return jsonify({'campaign': campaign.type}), 201
-
-
-
+    data = campaign_schema.dump(campaign)
+    response = jsonify({'items': data})
+    return response
 
 
 # ERROR PAGE 404

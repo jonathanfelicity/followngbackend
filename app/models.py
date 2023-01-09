@@ -22,7 +22,7 @@ class User(db.Model):
 # Define the Wallet model
 class Wallet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    balance = db.Column(db.Integer, nullable=False)
+    balance = db.Column(db.Float, nullable=False, default=150.0)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -34,7 +34,7 @@ class Campaign(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     type =  db.Column(db.db.String(255), nullable=False)
     goal = db.Column(db.Integer, nullable=False)
-    # link = db.column(db.String,)
+    link = db.column(db.String, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
     
     # many-to-one relationship with User
