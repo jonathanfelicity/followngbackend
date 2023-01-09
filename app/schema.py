@@ -3,20 +3,24 @@ from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 from . import ma
 
-# Define the User schema
-class UserSchema(ma.SQLAlchemyAutoSchema):
+class UserSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = User
+        exclude = ['created_At']
+        load_instance = True
 
-# Define the Wallet schema
-class WalletSchema(ma.SQLAlchemyAutoSchema):
+class WalletSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = Wallet
+        exclude = ['user']
+        load_instance = True
 
-# Define the Campaign schema
-class CampaignSchema(ma.SQLAlchemyAutoSchema):
+class CampaignSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = Campaign
+        exclude = ['user', 'campaign_created_at']
+        load_instance = True
+        
 
 # Initialize the User schema
 user_schema = UserSchema()
